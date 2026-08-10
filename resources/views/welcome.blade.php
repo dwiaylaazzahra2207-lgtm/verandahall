@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VerandaHall - Booking Gedung Online</title>
+    <title>VerandaHall</title>
     <meta name="description" content="Platform booking gedung serbaguna dan lapangan olahraga online yang mudah, cepat, dan terpercaya di Sidoarjo.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
