@@ -41,7 +41,7 @@
 
     {{-- Logout --}}
     <div class="sidebar-footer">
-        <form method="POST" action="{{ route('logout') }}">
+        <form method="POST" action="{{ route('logout') }}" onsubmit="sessionStorage.removeItem('vh_last_welcomed_user');">
             @csrf
             <button type="submit" class="logout-btn">
                 <i class="bi bi-box-arrow-left"></i>

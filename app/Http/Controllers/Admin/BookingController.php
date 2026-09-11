@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveBookingRequest;
 use App\Http\Requests\Admin\RejectBookingRequest;
 use App\Models\Booking;
+use App\Models\Notifikasi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
@@ -48,6 +49,15 @@ class BookingController extends Controller
             'alasan_penolakan' => null,
         ]);
 
+        $namaGedung = $booking->gedung ? $booking->gedung->nama : 'Gedung';
+        Notifikasi::create([
+            'user_id' => $booking->user_id,
+            'title'   => 'Pemesanan Disetujui',
+            'message' => "Selamat! Pemesanan Anda untuk {$namaGedung} pada tanggal {$booking->tanggal_booking} telah disetujui oleh admin.",
+            'type'    => 'success',
+            'is_read' => false,
+        ]);
+
         return $this->bookingActionResponse(true, 'Booking berhasil disetujui.');
     }
 
@@ -57,9 +67,19 @@ class BookingController extends Controller
             return $this->bookingActionResponse(false, 'Hanya booking berstatus menunggu yang dapat ditolak.', 422);
         }
 
+        $alasan = $request->validated('alasan_penolakan') ?? '-';
         $booking->update([
             'status' => Booking::STATUS_DITOLAK,
-            'alasan_penolakan' => $request->validated('alasan_penolakan'),
+            'alasan_penolakan' => $alasan,
+        ]);
+
+        $namaGedung = $booking->gedung ? $booking->gedung->nama : 'Gedung';
+        Notifikasi::create([
+            'user_id' => $booking->user_id,
+            'title'   => 'Pemesanan Ditolak',
+            'message' => "Mohon maaf, pemesanan Anda untuk {$namaGedung} ditolak oleh admin. Alasan: {$alasan}",
+            'type'    => 'danger',
+            'is_read' => false,
         ]);
 
         return $this->bookingActionResponse(true, 'Booking telah ditolak.');

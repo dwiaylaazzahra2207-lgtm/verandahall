@@ -25,11 +25,12 @@ class LoginController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $request->session()->put('login_welcome', true);
 
         $user = $request->user();
 
         return redirect()->route(
-            $user->role === 'admin' ? 'admin.dashboard' : 'user.dashboard'
+            $user->role === 'admin' ? 'admin.dashboard' : 'user.beranda'
         );
     }
 }

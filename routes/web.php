@@ -4,8 +4,9 @@ use App\Http\Controllers\Admin\BookingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\GedungController;
 use App\Http\Controllers\Admin\LaporanController;
-use App\Http\Controllers\Admin\NotifikasiController;
+use App\Http\Controllers\Admin\NotifikasiController as AdminNotifikasiController;
 use App\Http\Controllers\Admin\PengaturanController;
+use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Admin\RiwayatPemesananController;
 use App\Http\Controllers\Admin\UserManagementController;
 use App\Http\Controllers\LandingController;
@@ -71,7 +72,7 @@ Route::prefix('admin')
 
         Route::redirect('/manajemen-pemesanan', '/admin/pemesanan')->name('manajemenpemesanan');
 
-        Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+        Route::get('/notifikasi', [AdminNotifikasiController::class, 'index'])->name('notifikasi.index');
 
         Route::resource('users', UserManagementController::class)->except(['show']);
 
@@ -98,8 +99,12 @@ Route::prefix('admin')
     });
 
 
-// ================== PROFILE ==================
+// ================== NOTIFIKASI & PROFILE ==================
 Route::middleware('auth')->group(function () {
+    Route::post('/notifikasi/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.mark-as-read');
+    Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.mark-all-read');
+    Route::delete('/notifikasi/{notifikasi}', [NotifikasiController::class, 'destroy'])->name('notifikasi.destroy');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

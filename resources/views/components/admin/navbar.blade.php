@@ -1,10 +1,5 @@
 @props([])
 
-@php
-    use App\Models\Notifikasi;
-    $unreadNotif = Notifikasi::query()->where('is_read', false)->count();
-@endphp
-
 <header class="topbar">
 
     {{-- Kiri: hamburger (mobile) + logo --}}
@@ -26,13 +21,7 @@
     <div class="topbar-right">
 
         {{-- Bell notifikasi --}}
-        <button type="button" class="topbar-icon-btn"
-                onclick="window.location='{{ route('admin.notifikasi.index') }}'">
-            <i class="bi bi-bell-fill"></i>
-            @if($unreadNotif > 0)
-                <span class="notif-dot"></span>
-            @endif
-        </button>
+        <x-notification-bell />
 
         {{-- Admin info --}}
         <div class="topbar-admin"
