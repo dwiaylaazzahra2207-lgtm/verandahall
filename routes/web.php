@@ -50,6 +50,9 @@ Route::prefix('user')
         Route::get('/riwayat', [UserRiwayatController::class, 'index'])->name('riwayat.index');
         Route::get('/riwayat/{booking}', [UserRiwayatController::class, 'show'])->name('riwayat.show');
 
+        // Notifikasi
+        Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+
         // Pengaturan
         Route::get('/pengaturan', fn () => redirect()->route('user.pengaturan.index', ['tab' => 'profil']));
         Route::get('/pengaturan/{tab}', [UserPengaturanController::class, 'index'])
@@ -101,6 +104,12 @@ Route::prefix('admin')
 
 // ================== NOTIFIKASI & PROFILE ==================
 Route::middleware('auth')->group(function () {
+    Route::get('/notifikasi', function () {
+        return redirect()->route(
+            Auth::user()->role === 'admin' ? 'admin.notifikasi.index' : 'user.notifikasi.index'
+        );
+    })->name('notifikasi.all');
+
     Route::post('/notifikasi/{notifikasi}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.mark-as-read');
     Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.mark-all-read');
     Route::delete('/notifikasi/{notifikasi}', [NotifikasiController::class, 'destroy'])->name('notifikasi.destroy');

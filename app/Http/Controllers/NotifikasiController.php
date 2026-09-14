@@ -11,6 +11,23 @@ use Illuminate\Support\Facades\Auth;
 class NotifikasiController extends Controller
 {
     /**
+     * Tampilkan semua notifikasi milik user yang sedang login.
+     */
+    public function index(Request $request): \Illuminate\View\View
+    {
+        $user = Auth::user();
+        $notifikasi = $user
+            ? $user->notifikasi()->latest()->paginate(15)
+            : collect();
+
+        $unreadCount = $user
+            ? $user->notifikasi()->where('is_read', false)->count()
+            : 0;
+
+        return view('user.notifikasi.index', compact('notifikasi', 'unreadCount'));
+    }
+
+    /**
      * Tandai sebuah notifikasi sebagai sudah dibaca.
      */
     public function markAsRead(Request $request, Notifikasi $notifikasi): JsonResponse|RedirectResponse

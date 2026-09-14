@@ -85,4 +85,29 @@ class NotifikasiTest extends TestCase
 
         $this->assertEquals(0, $user->notifikasi()->where('is_read', false)->count());
     }
+
+    public function test_user_can_view_all_notifications_page(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'user',
+            'is_active' => true,
+        ]);
+
+        Notifikasi::create([
+            'user_id' => $user->id,
+            'title' => 'Judul Test Notifikasi',
+            'message' => 'Pesan lengkap test notifikasi',
+            'type' => 'info',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('user.notifikasi.index'));
+
+        $response->assertOk()
+            ->assertSee('Semua Notifikasi')
+            ->assertSee('Kembali')
+            ->assertSee('Judul Test Notifikasi')
+            ->assertSee('Pesan lengkap test notifikasi');
+    }
 }

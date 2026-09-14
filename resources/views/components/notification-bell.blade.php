@@ -108,14 +108,13 @@
             @endforelse
         </div>
 
-        {{-- Footer opsional jika admin --}}
-        @if(Auth::check() && Auth::user()->isAdmin())
-            <div class="notif-footer border-top text-center py-2 bg-light rounded-bottom-4">
-                <a href="{{ route('admin.notifikasi.index') }}" class="text-decoration-none text-primary fw-semibold" style="font-size: .78rem;">
-                    Lihat Semua Notifikasi <i class="bi bi-arrow-right ms-1"></i>
-                </a>
-            </div>
-        @endif
+        {{-- Footer link ke halaman semua notifikasi --}}
+        <div class="notif-footer border-top text-center py-2 bg-light rounded-bottom-4">
+            <a href="{{ Auth::check() && Auth::user()->isAdmin() ? route('admin.notifikasi.index') : route('user.notifikasi.index') }}"
+               class="text-decoration-none text-primary fw-semibold" style="font-size: .78rem;">
+                Lihat Semua Notifikasi <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
     </div>
 </div>
 
