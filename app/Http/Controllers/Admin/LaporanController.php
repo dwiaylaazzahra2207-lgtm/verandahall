@@ -85,6 +85,45 @@ class LaporanController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        // Export CSV
+        if ($request->input('export') === 'csv') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            $filename = 'laporan-booking-' . now()->format('Y-m-d') . '.csv';
+
+            return response()->streamDownload(function () use ($bookings) {
+                $handle = fopen('php://output', 'w');
+
+                fputcsv($handle, [
+                    'Tanggal',
+                    'Nama Pengguna',
+                    'Gedung',
+                    'Jam Mulai',
+                    'Jam Selesai',
+                    'Status',
+                    'Total Harga',
+                ]);
+
+                foreach ($bookings as $booking) {
+                    fputcsv($handle, [
+                        $booking->tanggal_booking,
+                        $booking->user?->name ?? '-',
+                        $booking->gedung?->nama ?? '-',
+                        $booking->jam_mulai ?? '-',
+                        $booking->jam_selesai ?? '-',
+                        $booking->status,
+                        $this->hitungHarga($booking),
+                    ]);
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
+        }
+
         // ── 7. Kirim ke view ─────────────────────────────────────────────────
         return view('admin.laporan', compact(
             'periode', 'dari', 'sampai', 'jenisLaporan',
