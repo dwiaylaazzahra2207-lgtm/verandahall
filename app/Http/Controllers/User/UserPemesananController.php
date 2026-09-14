@@ -5,6 +5,8 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Gedung;
+use App\Models\Notifikasi;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +59,7 @@ class UserPemesananController extends Controller
                 ->with('error', 'Tanggal tidak tersedia. Gedung sudah dipesan pada tanggal tersebut.');
         }
 
-        Booking::query()->create([
+        $booking = Booking::query()->create([
             'user_id'         => Auth::id(),
             'gedung_id'       => $validated['gedung_id'],
             'tanggal_booking' => $validated['tanggal_booking'],
@@ -68,6 +70,30 @@ class UserPemesananController extends Controller
             'catatan'         => $validated['catatan'] ?? null,
             'status'          => Booking::STATUS_MENUNGGU,
         ]);
+
+        $gedung = Gedung::query()->find($validated['gedung_id']);
+        $namaGedung = $gedung ? $gedung->nama : 'Gedung';
+
+        // Notifikasi untuk pengguna yang memesan
+        Notifikasi::create([
+            'user_id' => Auth::id(),
+            'title'   => 'Pemesanan Berhasil Dikirim',
+            'message' => "Pemesanan untuk {$namaGedung} pada tanggal {$validated['tanggal_booking']} berhasil dikirim dan menunggu persetujuan admin.",
+            'type'    => 'info',
+            'is_read' => false,
+        ]);
+
+        // Notifikasi untuk admin
+        $admins = User::query()->where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            Notifikasi::create([
+                'user_id' => $admin->id,
+                'title'   => 'Pemesanan Baru Masuk',
+                'message' => Auth::user()->name . " telah mengajukan pemesanan baru untuk {$namaGedung} pada tanggal {$validated['tanggal_booking']}.",
+                'type'    => 'info',
+                'is_read' => false,
+            ]);
+        }
 
         return redirect()->route('user.riwayat.index')
             ->with('success', 'Pemesanan berhasil dikirim! Status: Menunggu Persetujuan Admin.');

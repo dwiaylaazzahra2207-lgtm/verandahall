@@ -9,8 +9,11 @@
         </span>
     </div>
 
-    {{-- Kanan: user info --}}
+    {{-- Kanan: notifikasi + user info --}}
     <div class="topbar-right">
+        {{-- Bell notifikasi --}}
+        <x-notification-bell />
+
         <div class="topbar-user"
              onclick="window.location='{{ route('user.pengaturan.index', ['tab' => 'profil']) }}'">
             <div class="user-info">
