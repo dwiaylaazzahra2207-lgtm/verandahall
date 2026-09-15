@@ -57,7 +57,7 @@ class UserPengaturanController extends Controller
         ]);
 
         $request->user()->update([
-            'password' => Hash::make($request->validated()['password']),
+            'password' => Hash::make($request->input('password')),
         ]);
 
         return redirect()->route('user.pengaturan.index', ['tab' => 'keamanan'])
