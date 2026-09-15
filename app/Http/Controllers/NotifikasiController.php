@@ -32,8 +32,8 @@ class NotifikasiController extends Controller
      */
     public function markAsRead(Request $request, Notifikasi $notifikasi): JsonResponse|RedirectResponse
     {
-        // Pastikan notifikasi milik pengguna yang sedang login
-        if ($notifikasi->user_id && $notifikasi->user_id !== Auth::id()) {
+        // Pastikan notifikasi milik pengguna yang sedang login atau pengguna adalah admin
+        if ($notifikasi->user_id && $notifikasi->user_id !== Auth::id() && !Auth::user()?->isAdmin()) {
             abort(403, 'Anda tidak memiliki akses ke notifikasi ini.');
         }
 
@@ -41,7 +41,18 @@ class NotifikasiController extends Controller
             $notifikasi->update(['is_read' => true]);
         }
 
-        $unreadCount = Auth::user() ? Auth::user()->notifikasi()->where('is_read', false)->count() : 0;
+        $user = Auth::user();
+        $unreadCount = $user
+            ? Notifikasi::query()
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if ($user->isAdmin()) {
+                        $q->orWhereNull('user_id');
+                    }
+                })
+                ->where('is_read', false)
+                ->count()
+            : 0;
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -60,7 +71,18 @@ class NotifikasiController extends Controller
     public function markAllAsRead(Request $request): JsonResponse|RedirectResponse
     {
         if (Auth::check()) {
-            Auth::user()->notifikasi()->where('is_read', false)->update(['is_read' => true]);
+            $user = Auth::user();
+            if ($user->isAdmin()) {
+                Notifikasi::query()
+                    ->where(function ($q) use ($user) {
+                        $q->where('user_id', $user->id)
+                          ->orWhereNull('user_id');
+                    })
+                    ->where('is_read', false)
+                    ->update(['is_read' => true]);
+            } else {
+                $user->notifikasi()->where('is_read', false)->update(['is_read' => true]);
+            }
         }
 
         if ($request->expectsJson() || $request->ajax()) {
@@ -79,14 +101,25 @@ class NotifikasiController extends Controller
      */
     public function destroy(Request $request, Notifikasi $notifikasi): JsonResponse|RedirectResponse
     {
-        // Pastikan notifikasi milik pengguna yang sedang login
-        if ($notifikasi->user_id && $notifikasi->user_id !== Auth::id()) {
+        // Pastikan notifikasi milik pengguna yang sedang login atau pengguna adalah admin
+        if ($notifikasi->user_id && $notifikasi->user_id !== Auth::id() && !Auth::user()?->isAdmin()) {
             abort(403, 'Anda tidak memiliki akses ke notifikasi ini.');
         }
 
         $notifikasi->delete();
 
-        $unreadCount = Auth::user() ? Auth::user()->notifikasi()->where('is_read', false)->count() : 0;
+        $user = Auth::user();
+        $unreadCount = $user
+            ? Notifikasi::query()
+                ->where(function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                    if ($user->isAdmin()) {
+                        $q->orWhereNull('user_id');
+                    }
+                })
+                ->where('is_read', false)
+                ->count()
+            : 0;
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([

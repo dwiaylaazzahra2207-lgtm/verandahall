@@ -110,4 +110,58 @@ class NotifikasiTest extends TestCase
             ->assertSee('Judul Test Notifikasi')
             ->assertSee('Pesan lengkap test notifikasi');
     }
+
+    public function test_admin_can_view_all_notifications_page_with_back_url(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $notif = Notifikasi::create([
+            'user_id' => $admin->id,
+            'title' => 'Laporan Siap Diunduh',
+            'message' => 'Laporan pemesanan periode ini telah siap.',
+            'type' => 'info',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->from(route('admin.laporan.index'))
+            ->get(route('admin.notifikasi.index'));
+
+        $response->assertOk()
+            ->assertSee('Semua Notifikasi')
+            ->assertSee('Kembali')
+            ->assertSee(route('admin.laporan.index'))
+            ->assertSee('Laporan Siap Diunduh')
+            ->assertSee('btn-trash-notif');
+    }
+
+    public function test_admin_can_delete_notification(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        $notif = Notifikasi::create([
+            'user_id' => $admin->id,
+            'title' => 'Notif Hapus Admin',
+            'message' => 'Pesan yang akan dihapus',
+            'type' => 'info',
+            'is_read' => false,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->deleteJson(route('notifikasi.destroy', $notif));
+
+        $response->assertOk()
+            ->assertJson([
+                'success' => true,
+                'unread_count' => 0,
+            ]);
+
+        $this->assertDatabaseMissing('notifikasi', ['id' => $notif->id]);
+    }
 }
