@@ -20,6 +20,7 @@ class GedungUpdateRequest extends FormRequest
             'harga' => ['required', 'numeric', 'min:0'],
             'foto' => ['nullable', 'image', 'max:4096'],
             'status' => ['required', Rule::in(['pending', 'tersedia', 'habis'])],
+            'sync_venue' => ['nullable', 'boolean'],
         ];
     }
 }

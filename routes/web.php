@@ -96,6 +96,8 @@ Route::prefix('admin')
             ->name('pengaturan.index');
         Route::post('/pengaturan/profil', [PengaturanController::class, 'updateProfil'])->name('pengaturan.update-profil');
         Route::post('/pengaturan/venue', [PengaturanController::class, 'updateVenue'])->name('pengaturan.update-venue');
+        Route::delete('/pengaturan/venue/foto', [PengaturanController::class, 'deleteVenueFoto'])->name('pengaturan.delete-venue-foto');
+        Route::delete('/pengaturan/venue', [PengaturanController::class, 'deleteVenue'])->name('pengaturan.delete-venue');
         Route::post('/pengaturan/jadwal', [PengaturanController::class, 'updateJadwal'])->name('pengaturan.update-jadwal');
         Route::post('/pengaturan/notifikasi', [PengaturanController::class, 'updateNotifikasi'])->name('pengaturan.update-notifikasi');
         Route::post('/pengaturan/keamanan', [PengaturanController::class, 'updateKeamanan'])->name('pengaturan.update-keamanan');

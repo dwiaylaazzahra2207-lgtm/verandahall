@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateKeamananPengaturanRequest;
 use App\Http\Requests\Admin\UpdateNotifikasiPengaturanRequest;
 use App\Http\Requests\Admin\UpdateProfilPengaturanRequest;
 use App\Http\Requests\Admin\UpdateVenuePengaturanRequest;
+use App\Models\Gedung;
 use App\Models\OperationalSchedule;
 use App\Models\VenueSetting;
 use Illuminate\Http\RedirectResponse;
@@ -29,6 +30,18 @@ class PengaturanController extends Controller
         $this->ensureSchedulesExist();
 
         $venue = VenueSetting::singleton();
+        if (! $venue->foto || ! $venue->nama_venue) {
+            $latestGedung = Gedung::query()->latest()->first();
+            if ($latestGedung) {
+                if (! $venue->foto && $latestGedung->foto) {
+                    $venue->foto = $latestGedung->foto;
+                }
+                if (! $venue->nama_venue && $latestGedung->nama) {
+                    $venue->nama_venue = $latestGedung->nama;
+                }
+                $venue->save();
+            }
+        }
 
         $hariChoices = OperationalSchedule::hariChoices();
         $selectedHari = $request->query('hari', 'senin');
@@ -44,7 +57,7 @@ class PengaturanController extends Controller
     public function updateProfil(UpdateProfilPengaturanRequest $request): RedirectResponse
     {
         $user = $request->user();
-        $data = $request->safe()->except(['password', 'foto'])->toArray();
+        $data = $request->safe()->except(['password', 'foto']);
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->validated('password'));
@@ -82,6 +95,41 @@ class PengaturanController extends Controller
 
         return redirect()->route('admin.pengaturan.index', ['tab' => 'venue'])
             ->with('success', 'Data venue berhasil disimpan.');
+    }
+
+    public function deleteVenueFoto(): RedirectResponse
+    {
+        $venue = VenueSetting::singleton();
+
+        if ($venue->foto) {
+            Storage::disk('public')->delete($venue->foto);
+            $venue->foto = null;
+            $venue->save();
+        }
+
+        return redirect()->route('admin.pengaturan.index', ['tab' => 'venue'])
+            ->with('success', 'Foto venue berhasil dihapus.');
+    }
+
+    public function deleteVenue(): RedirectResponse
+    {
+        $venue = VenueSetting::singleton();
+
+        if ($venue->foto) {
+            Storage::disk('public')->delete($venue->foto);
+        }
+
+        $venue->update([
+            'nama_venue' => null,
+            'jenis_lapangan' => null,
+            'lokasi' => null,
+            'fasilitas' => null,
+            'link_maps' => null,
+            'foto' => null,
+        ]);
+
+        return redirect()->route('admin.pengaturan.index', ['tab' => 'venue'])
+            ->with('success', 'Data venue berhasil dihapus.');
     }
 
     public function updateJadwal(UpdateJadwalPengaturanRequest $request): RedirectResponse

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\GedungStoreRequest;
 use App\Http\Requests\Admin\GedungUpdateRequest;
 use App\Models\Gedung;
+use App\Models\VenueSetting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -40,6 +41,7 @@ class GedungController extends Controller
     public function store(GedungStoreRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        $syncVenue = $request->boolean('sync_venue', true);
 
         if ($request->hasFile('foto')) {
             $data['foto'] = $request->file('foto')->store('gedungs', 'public');
@@ -47,7 +49,24 @@ class GedungController extends Controller
             unset($data['foto']);
         }
 
-        Gedung::query()->create($data);
+        $gedung = Gedung::query()->create($data);
+
+        $venue = VenueSetting::singleton();
+        $updated = false;
+
+        if (($syncVenue || ! $venue->foto) && isset($data['foto'])) {
+            $venue->foto = $data['foto'];
+            $updated = true;
+        }
+
+        if (($syncVenue || ! $venue->nama_venue) && isset($data['nama'])) {
+            $venue->nama_venue = $data['nama'];
+            $updated = true;
+        }
+
+        if ($updated) {
+            $venue->save();
+        }
 
         return redirect()->route('admin.gedung.index')
             ->with('success', 'Gedung berhasil ditambahkan.');
@@ -66,6 +85,10 @@ class GedungController extends Controller
     public function update(GedungUpdateRequest $request, Gedung $gedung): RedirectResponse
     {
         $data = $request->validated();
+        $syncVenue = $request->boolean('sync_venue', false);
+
+        $oldFoto = $gedung->foto;
+        $oldNama = $gedung->nama;
 
         if ($request->hasFile('foto')) {
             if ($gedung->foto) {
@@ -77,6 +100,23 @@ class GedungController extends Controller
         }
 
         $gedung->update($data);
+
+        $venue = VenueSetting::singleton();
+        $updated = false;
+
+        if (($syncVenue || ! $venue->foto || $venue->foto === $oldFoto) && isset($data['foto'])) {
+            $venue->foto = $data['foto'];
+            $updated = true;
+        }
+
+        if (($syncVenue || ! $venue->nama_venue || $venue->nama_venue === $oldNama) && isset($data['nama'])) {
+            $venue->nama_venue = $data['nama'];
+            $updated = true;
+        }
+
+        if ($updated) {
+            $venue->save();
+        }
 
         return redirect()->route('admin.gedung.index')
             ->with('success', 'Gedung berhasil diperbarui.');

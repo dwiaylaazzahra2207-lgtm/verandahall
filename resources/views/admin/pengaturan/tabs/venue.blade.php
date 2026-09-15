@@ -114,6 +114,28 @@
             @else
                 <p class="small text-muted mb-0">Isi form di sebelah kiri untuk menyimpan informasi venue.</p>
             @endif
+
+            @if($venue->foto || $venue->nama_venue || $venue->lokasi || $venue->jenis_lapangan || $venue->fasilitas || $venue->link_maps)
+                <hr class="my-3 text-muted opacity-25">
+                <div class="d-flex flex-column gap-2">
+                    @if($venue->foto)
+                        <form action="{{ route('admin.pengaturan.delete-venue-foto') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus foto venue ini?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                <i class="bi bi-image me-1"></i> Hapus Foto Venue
+                            </button>
+                        </form>
+                    @endif
+                    <form action="{{ route('admin.pengaturan.delete-venue') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus seluruh data venue ini?');">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-sm w-100">
+                            <i class="bi bi-trash3 me-1"></i> Hapus Data Venue
+                        </button>
+                    </form>
+                </div>
+            @endif
         </div>
     </div>
 </div>

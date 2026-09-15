@@ -38,6 +38,14 @@
             <img src="{{ asset('storage/'.$gedung->foto) }}" alt="" class="rounded-3 mt-1" style="max-height:120px;">
         @endif
     </div>
+    <div class="col-12 mt-1">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="sync_venue" id="sync_venue" value="1" {{ $mode === 'create' ? 'checked' : '' }}>
+            <label class="form-check-label small text-muted" for="sync_venue">
+                <i class="bi bi-arrow-repeat me-1 text-primary"></i> Hubungkan & perbarui foto/nama ke <strong>Manajemen Venue (Pengaturan)</strong>
+            </label>
+        </div>
+    </div>
 </div>
 
 <div class="mt-4 d-flex gap-2">
