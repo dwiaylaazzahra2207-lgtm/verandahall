@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Gedung;
 use App\Models\User;
+use App\Exports\LaporanExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
 {
@@ -122,6 +124,18 @@ class LaporanController extends Controller
             }, $filename, [
                 'Content-Type' => 'text/csv; charset=UTF-8',
             ]);
+        }
+
+            // Export Excel
+        if ($request->input('export') === 'excel') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            return Excel::download(
+                new LaporanExport($bookings),
+                'laporan-booking-' . now()->format('Y-m-d') . '.xlsx'
+            );
         }
 
         // ── 7. Kirim ke view ─────────────────────────────────────────────────
