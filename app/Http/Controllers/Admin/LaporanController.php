@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Gedung;
 use App\Models\User;
+use App\Exports\LaporanExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanController extends Controller
 {
@@ -84,6 +86,78 @@ class LaporanController extends Controller
             ->latest('tanggal_booking')
             ->paginate(10)
             ->withQueryString();
+
+        // Export CSV
+        if ($request->input('export') === 'csv') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            $filename = 'laporan-booking-' . now()->format('Y-m-d') . '.csv';
+
+            return response()->streamDownload(function () use ($bookings) {
+                $handle = fopen('php://output', 'w');
+
+                fputcsv($handle, [
+                    'Tanggal',
+                    'Nama Pengguna',
+                    'Gedung',
+                    'Jam Mulai',
+                    'Jam Selesai',
+                    'Status',
+                    'Total Harga',
+                ]);
+
+                foreach ($bookings as $booking) {
+                    fputcsv($handle, [
+                        $booking->tanggal_booking,
+                        $booking->user?->name ?? '-',
+                        $booking->gedung?->nama ?? '-',
+                        $booking->jam_mulai ?? '-',
+                        $booking->jam_selesai ?? '-',
+                        $booking->status,
+                        $this->hitungHarga($booking),
+                    ]);
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+            ]);
+        }
+
+            // Export Excel
+        if ($request->input('export') === 'excel') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            return Excel::download(
+                new LaporanExport($bookings),
+                'laporan-booking-' . now()->format('Y-m-d') . '.xlsx'
+            );
+        }
+
+                // Export PDF
+        if ($request->input('export') === 'pdf') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            foreach ($bookings as $booking) {
+                $booking->laporan_total_harga = $this->hitungHarga($booking);
+            }
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan-pdf', [
+                'bookings' => $bookings,
+                'dari' => $dari,
+                'sampai' => $sampai,
+            ]);
+
+            return $pdf->download(
+                'laporan-booking-' . now()->format('Y-m-d') . '.pdf'
+            );
+        }
 
         // ── 7. Kirim ke view ─────────────────────────────────────────────────
         return view('admin.laporan', compact(
