@@ -138,6 +138,27 @@ class LaporanController extends Controller
             );
         }
 
+                // Export PDF
+        if ($request->input('export') === 'pdf') {
+            $bookings = (clone $baseQuery)
+                ->latest('tanggal_booking')
+                ->get();
+
+            foreach ($bookings as $booking) {
+                $booking->laporan_total_harga = $this->hitungHarga($booking);
+            }
+
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.laporan-pdf', [
+                'bookings' => $bookings,
+                'dari' => $dari,
+                'sampai' => $sampai,
+            ]);
+
+            return $pdf->download(
+                'laporan-booking-' . now()->format('Y-m-d') . '.pdf'
+            );
+        }
+
         // ── 7. Kirim ke view ─────────────────────────────────────────────────
         return view('admin.laporan', compact(
             'periode', 'dari', 'sampai', 'jenisLaporan',
