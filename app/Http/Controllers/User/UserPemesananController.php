@@ -46,17 +46,20 @@ class UserPemesananController extends Controller
             'catatan'        => ['nullable', 'string', 'max:1000'],
         ]);
 
-        // Cek ketersediaan: apakah sudah ada booking disetujui di gedung & tanggal yang sama
-        $conflict = Booking::query()
-            ->where('gedung_id', $validated['gedung_id'])
-            ->whereDate('tanggal_booking', $validated['tanggal_booking'])
-            ->where('status', Booking::STATUS_DISETUJUI)
-            ->exists();
+        // Cek bentrok gedung, tanggal, dan jam dengan booking yang sudah disetujui
+        $cekBooking = new Booking([
+            'gedung_id'       => $validated['gedung_id'],
+            'tanggal_booking' => $validated['tanggal_booking'],
+            'jam_mulai'       => $validated['jam_mulai'],
+            'jam_selesai'     => $validated['jam_selesai'] ?? null,
+        ]);
+
+        $conflict = $cekBooking->hasApprovedConflictExcludingSelf();
 
         if ($conflict) {
             return back()
                 ->withInput()
-                ->with('error', 'Tanggal tidak tersedia. Gedung sudah dipesan pada tanggal tersebut.');
+                ->with('error', 'Jadwal tidak tersedia. Gedung sudah memiliki booking yang disetujui pada waktu tersebut.');
         }
 
         $booking = Booking::query()->create([
@@ -101,22 +104,27 @@ class UserPemesananController extends Controller
 
     public function checkAvailability(Request $request): \Illuminate\Http\JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'gedung_id'       => ['required', 'exists:gedungs,id'],
             'tanggal_booking' => ['required', 'date'],
+            'jam_mulai'       => ['required', 'date_format:H:i'],
+            'jam_selesai'     => ['nullable', 'date_format:H:i', 'after:jam_mulai'],
         ]);
 
-        $conflict = Booking::query()
-            ->where('gedung_id', $request->gedung_id)
-            ->whereDate('tanggal_booking', $request->tanggal_booking)
-            ->where('status', Booking::STATUS_DISETUJUI)
-            ->exists();
+        $cekBooking = new Booking([
+            'gedung_id'       => $validated['gedung_id'],
+            'tanggal_booking' => $validated['tanggal_booking'],
+            'jam_mulai'       => $validated['jam_mulai'],
+            'jam_selesai'     => $validated['jam_selesai'] ?? null,
+        ]);
+
+        $conflict = $cekBooking->hasApprovedConflictExcludingSelf();
 
         return response()->json([
             'available' => ! $conflict,
             'message'   => $conflict
-                ? 'Tanggal tidak tersedia. Gedung sudah dipesan pada tanggal tersebut.'
-                : 'Tanggal tersedia.',
+                ? 'Jadwal tidak tersedia. Gedung sudah memiliki booking yang disetujui pada waktu tersebut.'
+                : 'Jadwal tersedia.',
         ]);
     }
 }

@@ -89,11 +89,27 @@ class Booking extends Model
             ? $this->tanggal_booking->format('Y-m-d')
             : Carbon::parse($this->tanggal_booking)->format('Y-m-d');
 
-        return static::query()
+        $query = static::query()
             ->where('gedung_id', $this->gedung_id)
             ->whereDate('tanggal_booking', $date)
-            ->where('status', self::STATUS_DISETUJUI)
-            ->whereKeyNot($this->getKey())
+            ->where('status', self::STATUS_DISETUJUI);
+
+        // Kalau booking sudah tersimpan, jangan bandingkan dengan dirinya sendiri.
+        if ($this->exists) {
+            $query->whereKeyNot($this->getKey());
+        }
+
+        // Kalau jam tidak lengkap, gunakan pengecekan berdasarkan tanggal.
+        if (!$this->jam_mulai || !$this->jam_selesai) {
+            return $query->exists();
+        }
+
+        // Cek apakah waktu booking saling bertumpang tindih.
+        return $query
+            ->where(function ($q) {
+                $q->where('jam_mulai', '<', $this->jam_selesai)
+                    ->where('jam_selesai', '>', $this->jam_mulai);
+            })
             ->exists();
     }
 }

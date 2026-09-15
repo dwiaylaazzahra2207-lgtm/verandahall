@@ -418,23 +418,35 @@ tanggalInput.addEventListener('change', function () {
     checkTimeout = setTimeout(checkAvailability, 400);
 });
 
+document.querySelector('[name="jam_mulai"]').addEventListener('change', checkAvailability);
+
+document.querySelector('[name="jam_selesai"]').addEventListener('change', checkAvailability);
+
 function checkAvailability() {
     const gedungId = gedungSelect.value;
-    const tanggal  = tanggalInput.value;
-    if (!gedungId || !tanggal) return;
+    const tanggal = tanggalInput.value;
+    const jamMulai = document.querySelector('[name="jam_mulai"]').value;
+    const jamSelesai = document.querySelector('[name="jam_selesai"]').value;
+
+    if (!gedungId || !tanggal || !jamMulai) return;
 
     availStatus.style.display = 'block';
     availStatus.innerHTML = '<span class="av-badge av-checking">Memeriksa ketersediaan…</span>';
     submitBtn.disabled = true;
 
-    fetch('{{ route("user.pemesanan.check") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-        },
-        body: JSON.stringify({ gedung_id: gedungId, tanggal_booking: tanggal }),
-    })
+fetch('{{ route("user.pemesanan.check") }}', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+    },
+    body: JSON.stringify({
+        gedung_id: gedungId,
+        tanggal_booking: tanggal,
+        jam_mulai: jamMulai,
+        jam_selesai: jamSelesai || null,
+    }),
+})
     .then(r => r.json())
     .then(data => {
         availStatus.style.display = 'block';
